@@ -1,10 +1,10 @@
 <?php
 /**
- * @category Scandiweb
- * @package Scandiweb\Test
- * @author Wishva Weerasekara <info@scandiweb.com>
+ * @category  Scandiweb
+ * @package   Scandiweb\Test
+ * @author    Wishva Weerasekara <info@scandiweb.com>
  * @copyright Copyright (c) 2022 Scandiweb, Ltd (http://scandiweb.com)
- * @license http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
+ * @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
  */
 
 namespace Scandiweb\Test\Setup\Patch\Data;
@@ -18,24 +18,23 @@ use Magento\Catalog\Model\Product\Type;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\Eav\Setup\EavSetup;
 use Magento\Framework\App\State;
-use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Catalog\Api\CategoryLinkManagementInterface;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 
 /**
  * Class AddSimpleProduct
+ *
  * @package Scandiweb\Test\Setup\Patch\Data
  */
 class AddSimpleProduct implements DataPatchInterface
 {
-    /**
-     * @var ModuleDataSetupInterface
-     */
-    protected ModuleDataSetupInterface $setup;
-
     /**
      * @var ProductInterfaceFactory
      */
@@ -54,7 +53,7 @@ class AddSimpleProduct implements DataPatchInterface
     /**
      * @var EavSetup
      */
-	protected EavSetup $eavSetup;
+    protected EavSetup $eavSetup;
 
     /**
      * @var StoreManagerInterface
@@ -64,22 +63,22 @@ class AddSimpleProduct implements DataPatchInterface
     /**
      * @var SourceItemInterfaceFactory
      */
-	protected SourceItemInterfaceFactory $sourceItemFactory;
+    protected SourceItemInterfaceFactory $sourceItemFactory;
 
     /**
      * @var SourceItemsSaveInterface
      */
-	protected SourceItemsSaveInterface $sourceItemsSaveInterface;
+    protected SourceItemsSaveInterface $sourceItemsSaveInterface;
 
     /**
      * @var CategoryLinkManagementInterface
      */
-	protected CategoryLinkManagementInterface $categoryLink;
+    protected CategoryLinkManagementInterface $categoryLink;
 
     /**
-     * @var CollectionFactory
+     * @var CategoryCollectionFactory
      */
-	protected CollectionFactory $categoryCollectionFactory;
+    protected CategoryCollectionFactory $categoryCollectionFactory;
 
     /**
      * @var array
@@ -88,8 +87,8 @@ class AddSimpleProduct implements DataPatchInterface
 
     /**
      * AddSimpleProduct constructor
-     * @param ModuleDataSetupInterface $setup
-     * @param ProductInterfaceFactory   $productInterfaceFactory
+     *
+     * @param ProductInterfaceFactory $productInterfaceFactory
      * @param ProductRepositoryInterface $productRepository
      * @param State $appState
      * @param StoreManagerInterface $storeManager
@@ -97,36 +96,38 @@ class AddSimpleProduct implements DataPatchInterface
      * @param SourceItemInterfaceFactory $sourceItemFactory
      * @param SourceItemsSaveInterface $sourceItemsSaveInterface
      * @param CategoryLinkManagementInterface $categoryLink
+     * @param CategoryCollectionFactory $categoryCollectionFactory
      */
     public function __construct(
-        ModuleDataSetupInterface        $setup,
-        ProductInterfaceFactory         $productInterfaceFactory,
-        ProductRepositoryInterface      $productRepository,
-        State                           $appState,
-        StoreManagerInterface           $storeManager,
-        EavSetup                        $eavSetup,
-		SourceItemInterfaceFactory      $sourceItemFactory,
-        SourceItemsSaveInterface        $sourceItemsSaveInterface,
-		CategoryLinkManagementInterface  $categoryLink
+        ProductInterfaceFactory $productInterfaceFactory,
+        ProductRepositoryInterface $productRepository,
+        State $appState,
+        StoreManagerInterface $storeManager,
+        EavSetup $eavSetup,
+        SourceItemInterfaceFactory $sourceItemFactory,
+        SourceItemsSaveInterface $sourceItemsSaveInterface,
+        CategoryLinkManagementInterface $categoryLink,
+        CategoryCollectionFactory $categoryCollectionFactory
     ) {
         $this->appState = $appState;
         $this->productInterfaceFactory = $productInterfaceFactory;
         $this->productRepository = $productRepository;
-        $this->setup = $setup;
-		$this->eavSetup = $eavSetup;
+        $this->eavSetup = $eavSetup;
         $this->storeManager = $storeManager;
         $this->sourceItemFactory = $sourceItemFactory;
         $this->sourceItemsSaveInterface = $sourceItemsSaveInterface;
-		$this->categoryLink = $categoryLink;
+        $this->categoryLink = $categoryLink;
+        $this->CategoryCollectionFactory = $categoryCollectionFactory;
     }
 
     /**
      * Add new product
+     *
      * @return DataPatchInterface|void
      */
     public function apply()
     {
-				// run setup in back-end area
+        // run setup in back-end area
         $this->appState->emulateAreaCode('adminhtml', [$this, 'execute']);
     }
 
@@ -139,10 +140,10 @@ class AddSimpleProduct implements DataPatchInterface
      */
     public function execute()
     {
-		// create the product
+        // create the product
         $product = $this->productInterfaceFactory->create();
 
-		// check if the product already exists
+        // check if the product already exists
         if ($product->getIdBySku('Test-Product-12345678')) {
             return;
         }
@@ -150,13 +151,13 @@ class AddSimpleProduct implements DataPatchInterface
         // set attributes
         $attributeSetId = $this->eavSetup->getAttributeSetId(Product::ENTITY, 'Default');
         $product->setTypeId(Type::TYPE_SIMPLE)
-                ->setAttributeSetId($attributeSetId)
-                ->setName('Test Product')
-                ->setSku('Test-Product-12345678')
-                ->setUrlKey('testproduct')
-                ->setPrice(20.50)
-                ->setVisibility(Visibility::VISIBILITY_BOTH)
-                ->setStatus(Status::STATUS_ENABLED);
+            ->setAttributeSetId($attributeSetId)
+            ->setName('Test Product')
+            ->setSku('Test-Product-12345678')
+            ->setUrlKey('testproduct')
+            ->setPrice(20.50)
+            ->setVisibility(Visibility::VISIBILITY_BOTH)
+            ->setStatus(Status::STATUS_ENABLED);
         
         // link product to the web site
         $websiteIDs = [$this->storeManager->getStore()->getWebsiteId()];
@@ -165,7 +166,7 @@ class AddSimpleProduct implements DataPatchInterface
         // save the product to the repository
         $product = $this->productRepository->save($product);
 
-		// set source item...
+        // set source item...
         $sourceItem = $this->sourceItemFactory->create();
         $sourceItem->setSourceCode('default');
         $sourceItem->setQuantity(100);
@@ -175,10 +176,14 @@ class AddSimpleProduct implements DataPatchInterface
         $this->sourceItemsSaveInterface->execute($this->sourceItems);
 
         // add the product to the men category 
-        $this->categoryLink->assignProductToCategories($product->getSku(), [11]);
+        $categoryTitles = ['Women', 'Men', 'Gear'];
+        $categoryIds = $this->categoryCollectionFactory->create()
+            ->addAttributeToFilter('Men', ['in' => $categoryTitles])
+            ->getAllIds();
+	    $this->categoryLink->assignProductToCategories($product->getSku(), $categoryIds);
     }
 
-     /**
+    /**
      * {@inheritDoc}
      */
     public static function getDependencies(): array
